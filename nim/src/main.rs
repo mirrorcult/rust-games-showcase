@@ -1,20 +1,18 @@
+use rand::Rng;
 use std::{
     io::{stdin, stdout, Write},
+    process::exit,
     thread::sleep,
     time::Duration,
-    process::exit
 };
-use rand::Rng;
 
 struct NimBoard {
-    sticks: i32
+    sticks: i32,
 }
 
 impl NimBoard {
     fn new() -> NimBoard {
-        NimBoard {
-            sticks: 12
-        }
+        NimBoard { sticks: 12 }
     }
 
     /// Take `sticks_to_take` sticks from the board
@@ -23,7 +21,10 @@ impl NimBoard {
             self.sticks -= sticks_to_take;
         } else {
             let sticks_random = rand::thread_rng().gen_range(1, 4);
-            println!("You can't take {} sticks! Randomly chose {} sticks instead.\n", sticks_to_take, sticks_random);
+            println!(
+                "You can't take {} sticks! Randomly chose {} sticks instead.\n",
+                sticks_to_take, sticks_random
+            );
             sleep(Duration::from_secs(2));
             self.sticks -= sticks_random;
         }
@@ -34,7 +35,11 @@ impl NimBoard {
         if self.sticks <= 0 {
             return String::from(" ");
         }
-        format!("{} ({})", (0..self.sticks).map(|_| " | ").collect::<String>(), self.sticks)
+        format!(
+            "{} ({})",
+            (0..self.sticks).map(|_| " | ").collect::<String>(),
+            self.sticks
+        )
     }
 
     fn print(&self) {
@@ -44,11 +49,13 @@ impl NimBoard {
     }
 }
 
-fn input (message: &str) -> String {
+fn input(message: &str) -> String {
     print!("{}", message);
     stdout().flush().expect("Failed to flush");
     let mut ret = String::new();
-    stdin().read_line(&mut ret).expect("Failed to read from stdin");
+    stdin()
+        .read_line(&mut ret)
+        .expect("Failed to read from stdin");
     ret.split_whitespace().collect::<String>()
 }
 
@@ -70,18 +77,18 @@ fn main() {
     loop {
         board.print();
         let mut ai_sticks = board.sticks % 4; // always take 4 - (player_sticks)
-        if ai_sticks == 0 { 
+        if ai_sticks == 0 {
             // if we started at a multiple of four, we cant take 0
             ai_sticks = rand::thread_rng().gen_range(1, 4);
         }
         println!("AI is taking: {} sticks", ai_sticks);
         board.take(ai_sticks);
-        
+
         if board.sticks <= 0 {
             println!("AI wins! Too bad.");
             exit(0);
         }
-        
+
         sleep(Duration::from_secs(2));
         board.print();
         let player_sticks = input("How many sticks to take? ").parse().unwrap_or(0);
@@ -93,4 +100,3 @@ fn main() {
         }
     }
 }
-
