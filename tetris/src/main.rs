@@ -1,3 +1,9 @@
+// TODO T: Tetrominos
+// TODO T: Get collision check working
+// TODO T: Get placement working
+// TODO T: Get rendering working (*)
+// TODO G: Game logic
+
 use std::io::{stdout, Read, Write};
 use std::{thread, time::Duration};
 
@@ -10,9 +16,11 @@ use termion::{
     async_stdin
 };
 
+mod colors;
 mod tetromino;
 mod tetris;
 
+use colors::TetrominoColor;
 use tetromino::{TetrominoType, Tetromino};
 use tetris::TetrisGame;
 
@@ -26,9 +34,7 @@ fn main() {
 
     let mut Game = TetrisGame::new(10, 20);
     
-    let mut frame_counter = 0;
-
-    // Draw tetris well
+    // Draw tetris container/well/whatever you wanna call it
     for y in 0..Game.height {
         for x in 0..Game.width {
             if (x == 0 || x == Game.width - 1) || (y == Game.height - 1) {
@@ -36,14 +42,23 @@ fn main() {
             }
         }
     }
-
     stdout.flush().unwrap();
     
     // Main game loop
+    // TODO G: Points system
     loop {
+        // Create our random tetromino if we don't have one
+        if !Game.has_active_tetromino() {
+            let tetromino_type = rand::random::<TetrominoType>();
+            Game.tetromino = Some(Tetromino::new(4, 0, tetromino_type)); // starting point is always 4 blocks over
+            Game.tetromino_color = Some(rand::random::<TetrominoColor>());
+        }
+
         // Handle moving tetromino down
-        if frame_counter % 30 == 0 {
-//            write!(stdout, "{}F", cursor::Goto(1, frame_counter / 30)).unwrap();
+        // TODO G: Make tetrominos actually move down
+        // TODO G: Add speed going up
+        if Game.frame_counter % 30 == 0 {
+            write!(stdout, "{}F", cursor::Goto(1, Game.frame_counter / 30)).unwrap();
             stdout.flush().unwrap();
         }
 
@@ -52,12 +67,13 @@ fn main() {
         match input {
             Some(Ok(b'q')) => return,
             Some(Ok(b'z')) => {
-                write!(stdout, "{}", cursor::Goto(3, 5)).unwrap();
+                // rotate
+                write!(stdout, "{}X", cursor::Goto(3, 5)).unwrap();
             }
             _ => (),
         }
 
-        frame_counter += 1;
+        Game.frame_counter += 1;
         thread::sleep(Duration::from_millis(17)); // ~60fps, did this because of input handling bullshit
         stdout.flush().unwrap();
     }

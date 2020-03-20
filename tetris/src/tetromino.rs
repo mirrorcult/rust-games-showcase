@@ -1,3 +1,9 @@
+use rand::{
+    distributions::{Distribution, Standard},
+    Rng,
+};
+
+#[derive(Debug)]
 pub enum TetrominoType {
     I, // straight
     O, // square
@@ -6,6 +12,20 @@ pub enum TetrominoType {
     L,
     S, // reverse Z
     Z,
+}
+
+impl Distribution<TetrominoType> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TetrominoType {
+        match rng.gen_range(0, 6) {
+            0 => TetrominoType::I,
+            1 => TetrominoType::O,
+            2 => TetrominoType::T,
+            3 => TetrominoType::J,
+            4 => TetrominoType::L,
+            5 => TetrominoType::S,
+            _ => TetrominoType::Z
+        }
+    }
 }
 
 /// Basic struct representing a Tetromino, the pieces in Tetris.
@@ -22,15 +42,17 @@ pub enum TetrominoType {
 /// ```
 pub struct Tetromino {
     rotation: usize, // 0 = 0*, 1 = 90*, 2 = 180*, 3 = 270*
-    top_left: (usize, usize), // (x, y) position of the top corner of the 4x4 grid
+    x: usize, // (x, y) position of the top corner of the 4x4 grid
+    y: usize, // ''
     shape: TetrominoType,
 }
 
 impl Tetromino {
-    fn new(top_left: (usize, usize), shape: TetrominoType) -> Tetromino {
+    pub fn new(x: usize, y: usize, shape: TetrominoType) -> Tetromino {
         Tetromino {
             rotation: 0,
-            top_left,
+            x,
+            y,
             shape
         }
     }
@@ -45,7 +67,7 @@ impl Tetromino {
     /// 8 9 10 11   14 10 6 2
     /// 12 13 14 15 15 11 7 3
     /// ```
-    fn xy_to_idx(&self, x: usize, y: usize) -> usize {
+    pub fn xy_to_idx(&self, x: usize, y: usize) -> usize {
         match self.rotation {
             0 => { // 0
                 y * 4 + x
@@ -66,7 +88,7 @@ impl Tetromino {
     /// Returns a String of 16 length representing the tetromino.
     /// Rotation is not accounted for here, only shape, as the renderer itself
     /// will rotate pieces, and rotated shapes indexes using `xy_to_idx`.
-    fn as_string(&self) -> String {
+    pub fn as_string(&self) -> String {
         let mut result: String = String::new();
 
         match self.shape {
@@ -117,7 +139,19 @@ impl Tetromino {
         result
     }
 
-    fn rotate(&mut self) {
+    pub fn rotate(&mut self) {
         self.rotation = (self.rotation + 1) % 4;
+    }
+
+    pub fn move_down(&mut self) {
+        self.y -= 1;
+    }
+
+    pub fn move_left(&mut self) {
+        self.x -= 1;
+    }
+
+    pub fn move_right(&mut self) {
+        self.x += 1;
     }
 }
