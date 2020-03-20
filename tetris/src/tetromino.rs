@@ -3,31 +3,7 @@ use rand::{
     Rng,
 };
 
-#[derive(Debug)]
-pub enum TetrominoType {
-    I, // straight
-    O, // square
-    T, 
-    J, // reverse L
-    L,
-    S, // reverse Z
-    Z,
-}
-
-impl Distribution<TetrominoType> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> TetrominoType {
-        match rng.gen_range(0, 6) {
-            0 => TetrominoType::I,
-            1 => TetrominoType::O,
-            2 => TetrominoType::T,
-            3 => TetrominoType::J,
-            4 => TetrominoType::L,
-            5 => TetrominoType::S,
-            _ => TetrominoType::Z
-        }
-    }
-}
-
+#[derive(Debug, Copy, Clone)]
 /// Basic struct representing a Tetromino, the pieces in Tetris.
 /// Each tetromino is represented by a 16-long string, which can be
 /// mapped to a 4x4 array in which the tetromino resides.
@@ -40,23 +16,31 @@ impl Distribution<TetrominoType> for Standard {
 ///XX.X
 ///XX.X
 /// ```
-pub struct Tetromino {
-    rotation: usize, // 0 = 0*, 1 = 90*, 2 = 180*, 3 = 270*
-    x: usize, // (x, y) position of the top corner of the 4x4 grid
-    y: usize, // ''
-    shape: TetrominoType,
+pub enum Tetromino {
+    I, // straight
+    O, // square
+    T, 
+    J, // reverse L
+    L,
+    S, // reverse Z
+    Z,
+}
+
+impl Distribution<Tetromino> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Tetromino {
+        match rng.gen_range(0, 6) {
+            0 => Tetromino::I,
+            1 => Tetromino::O,
+            2 => Tetromino::T,
+            3 => Tetromino::J,
+            4 => Tetromino::L,
+            5 => Tetromino::S,
+            _ => Tetromino::Z
+        }
+    }
 }
 
 impl Tetromino {
-    pub fn new(x: usize, y: usize, shape: TetrominoType) -> Tetromino {
-        Tetromino {
-            rotation: 0,
-            x,
-            y,
-            shape
-        }
-    }
-
     /// Given an X and Y coordinate, returns the string index of the tetromino's hitbox that corresponds.
     /// Accounts for rotation.
     ///
@@ -67,8 +51,8 @@ impl Tetromino {
     /// 8 9 10 11   14 10 6 2
     /// 12 13 14 15 15 11 7 3
     /// ```
-    pub fn xy_to_idx(&self, x: usize, y: usize) -> usize {
-        match self.rotation {
+    pub fn xy_to_idx(&self, x: usize, y: usize, r: usize) -> usize {
+        match r {
             0 => { // 0
                 y * 4 + x
             },
@@ -91,44 +75,44 @@ impl Tetromino {
     pub fn as_string(&self) -> String {
         let mut result: String = String::new();
 
-        match self.shape {
-            TetrominoType::I => {
+        match self {
+            Tetromino::I => {
                 result.push_str("XX.X");
                 result.push_str("XX.X");
                 result.push_str("XX.X");
                 result.push_str("XX.X");
             },
-            TetrominoType::O => {
+            Tetromino::O => {
                 result.push_str("XXXX");
                 result.push_str("X..X");
                 result.push_str("X..X");
                 result.push_str("XXXX");
             },
-            TetrominoType::T => {
+            Tetromino::T => {
                 result.push_str("XXXX");
                 result.push_str("X.XX");
                 result.push_str("...X");
                 result.push_str("XXXX");
             },
-            TetrominoType::J => {
+            Tetromino::J => {
                 result.push_str("XX.X");
                 result.push_str("XX.X");
                 result.push_str("X..X");
                 result.push_str("XXXX");
             },
-            TetrominoType::L => {
+            Tetromino::L => {
                 result.push_str("X.XX");
                 result.push_str("X.XX");
                 result.push_str("X..X");
                 result.push_str("XXXX");
             },
-            TetrominoType::S => {
+            Tetromino::S => {
                 result.push_str("XXXX");
                 result.push_str("X..X");
                 result.push_str("..XX");
                 result.push_str("XXXX");
             },
-            TetrominoType::Z => {
+            Tetromino::Z => {
                 result.push_str("XXXX");
                 result.push_str("X..X");
                 result.push_str("XX..");
@@ -137,21 +121,5 @@ impl Tetromino {
         }
 
         result
-    }
-
-    pub fn rotate(&mut self) {
-        self.rotation = (self.rotation + 1) % 4;
-    }
-
-    pub fn move_down(&mut self) {
-        self.y -= 1;
-    }
-
-    pub fn move_left(&mut self) {
-        self.x -= 1;
-    }
-
-    pub fn move_right(&mut self) {
-        self.x += 1;
     }
 }

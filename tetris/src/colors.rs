@@ -5,7 +5,7 @@ use rand::{
 
 use termion::color::{self, Color};
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum TetrominoColor {
     Red, 
     Magenta, 

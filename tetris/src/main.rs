@@ -11,7 +11,6 @@ use termion::{
     color,
     clear,
     cursor,
-    input::TermRead,
     raw::IntoRawMode,
     async_stdin
 };
@@ -21,7 +20,7 @@ mod tetromino;
 mod tetris;
 
 use colors::TetrominoColor;
-use tetromino::{TetrominoType, Tetromino};
+use tetromino::Tetromino;
 use tetris::TetrisGame;
 
 fn main() {
@@ -29,52 +28,75 @@ fn main() {
     let mut stdin = async_stdin().bytes();
     let mut stdout = stdout.lock().into_raw_mode().unwrap();
 
-    write!(stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
-    stdout.flush().unwrap();
-
-    let mut Game = TetrisGame::new(10, 20);
-    
-    // Draw tetris container/well/whatever you wanna call it
-    for y in 0..Game.height {
-        for x in 0..Game.width {
-            if (x == 0 || x == Game.width - 1) || (y == Game.height - 1) {
-                write!(stdout, "{}{}█", cursor::Goto(x as u16 + 2, y as u16 + 2), color::Fg(color::Blue)).unwrap(); // +2 -> offset from border
-            }
-        }
-    }
-    stdout.flush().unwrap();
+    let mut game = TetrisGame::new(10, 20);
     
     // Main game loop
     // TODO G: Points system
     loop {
         // Create our random tetromino if we don't have one
-        if !Game.has_active_tetromino() {
-            let tetromino_type = rand::random::<TetrominoType>();
-            Game.tetromino = Some(Tetromino::new(4, 0, tetromino_type)); // starting point is always 4 blocks over
-            Game.tetromino_color = Some(rand::random::<TetrominoColor>());
+        if !game.has_active_tetromino() {
+            game.tetromino = Some(rand::random::<Tetromino>()); // starting point is always 4 blocks over
+            game.tetromino_color = Some(rand::random::<TetrominoColor>());
         }
 
-        // Handle moving tetromino down
-        // TODO G: Make tetrominos actually move down
-        // TODO G: Add speed going up
-        if Game.frame_counter % 30 == 0 {
-            write!(stdout, "{}F", cursor::Goto(1, Game.frame_counter / 30)).unwrap();
-            stdout.flush().unwrap();
+        // Handle movement downwards
+        // TODO G: Add speed going up with points & time
+        if game.frame_counter % 90 == 0 {
+            game.move_tetromino_down();
         }
 
-        // Handle input
+        // Handle input & movement left/right/down
         let input = stdin.next();
         match input {
-            Some(Ok(b'q')) => return,
+            Some(Ok(b'q')) => break,
+            Some(Ok(b'a')) => {
+                game.move_tetromino_left();
+            },
+            Some(Ok(b'd')) => {
+                game.move_tetromino_right();
+            },
+            Some(Ok(b's')) => {
+                game.move_tetromino_down();
+            },
             Some(Ok(b'z')) => {
-                // rotate
-                write!(stdout, "{}X", cursor::Goto(3, 5)).unwrap();
+                game.rotate_tetromino();
             }
             _ => (),
         }
 
-        Game.frame_counter += 1;
-        thread::sleep(Duration::from_millis(17)); // ~60fps, did this because of input handling bullshit
+        // ## Rendering ##
+
+        write!(stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
+
+        // Draw tetris container/well/whatever you wanna call it
+        for y in 0..game.height + 1 {
+            for x in 0..game.width + 2 {
+                if (x == 0 || x == game.width + 2 - 1) || (y == game.height + 1 - 1) {
+                    write!(stdout, "{}{}█", cursor::Goto(x as u16 + 1, y as u16 + 1), color::Fg(color::Blue)).unwrap();
+                }
+            }
+        }
+
+        // Draw our tetromino
+        // Trick here is to get the index of the string through xy_to_idx (which accounts for rotation)
+        // Then we draw it at the top left point, offset by one because of the well
+        let tetromino_string = game.tetromino.unwrap().as_string();
+        for y in 0..4 {
+            for x in 0..4 { 
+                let mut tetromino_chars = tetromino_string.chars();
+                let tetromino_idx = game.tetromino.unwrap().xy_to_idx(x, y, game.tetromino_rotation);
+                if tetromino_chars.nth(tetromino_idx).unwrap() == '.' {
+                    let x_to_render = game.tetromino_x + x + 1;
+                    let y_to_render = game.tetromino_y + y + 1;
+                    write!(stdout, "{}{}█", cursor::Goto(x_to_render as u16 + 1, y_to_render as u16 + 1), color::Fg(color::Red)).unwrap();
+                }
+            }
+        }
+
+        write!(stdout, "{}", cursor::Goto(1, 1)).unwrap();
         stdout.flush().unwrap();
+        thread::sleep(Duration::from_millis(17)); // ~60fps, did this because of input handling bullshit
+        game.frame_counter += 1;
     }
+    println!("Frame count: {}\nRotation: {}\nXY: {} {}", game.frame_counter, game.tetromino_rotation, game.tetromino_x, game.tetromino_y);
 }
