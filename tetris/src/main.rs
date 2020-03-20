@@ -93,7 +93,7 @@ fn main() {
             }
         }
 
-        write!(stdout, "{}", cursor::Goto(1, 1)).unwrap();
+        write!(stdout, "{}", cursor::Hide).unwrap();
         stdout.flush().unwrap();
         thread::sleep(Duration::from_millis(17)); // ~60fps, did this because of input handling bullshit
         game.frame_counter += 1;
