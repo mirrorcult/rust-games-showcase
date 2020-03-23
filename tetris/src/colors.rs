@@ -3,27 +3,26 @@ use rand::{
     Rng,
 };
 
-use termion::color::{self, Color};
+use termion::color;
 
 #[derive(Debug, Copy, Clone)]
 pub enum TetrominoColor {
-    Red, 
-    Magenta, 
-    Blue, 
-    Yellow, 
+    Red,
+    Magenta,
+    Blue,
+    Yellow,
     Green,
-    Cyan, 
+    Cyan,
 }
-
 impl TetrominoColor {
-    pub fn as_terminal_color(&self) -> Box<dyn Color> {
+    pub fn as_terminal_color(&self) -> &'static str {
         match self {
-            TetrominoColor::Red => Box::new(color::Red),
-            TetrominoColor::Magenta => Box::new(color::Magenta),
-            TetrominoColor::Blue => Box::new(color::Blue),
-            TetrominoColor::Yellow => Box::new(color::Yellow),
-            TetrominoColor::Green => Box::new(color::Green),
-            TetrominoColor::Cyan => Box::new(color::Cyan),
+            TetrominoColor::Red => color::Red.fg_str(),
+            TetrominoColor::Magenta => color::Magenta.fg_str(),
+            TetrominoColor::Blue => color::LightBlue.fg_str(),
+            TetrominoColor::Yellow => color::Yellow.fg_str(),
+            TetrominoColor::Green => color::Green.fg_str(),
+            TetrominoColor::Cyan => color::Cyan.fg_str(),
         }
     }
 }

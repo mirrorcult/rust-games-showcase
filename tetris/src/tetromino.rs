@@ -19,7 +19,7 @@ use rand::{
 pub enum Tetromino {
     I, // straight
     O, // square
-    T, 
+    T,
     J, // reverse L
     L,
     S, // reverse Z
@@ -35,7 +35,7 @@ impl Distribution<Tetromino> for Standard {
             3 => Tetromino::J,
             4 => Tetromino::L,
             5 => Tetromino::S,
-            _ => Tetromino::Z
+            _ => Tetromino::Z,
         }
     }
 }
@@ -53,19 +53,20 @@ impl Tetromino {
     /// ```
     pub fn xy_to_idx(&self, x: usize, y: usize, r: usize) -> usize {
         match r {
-            0 => { // 0
+            0 => {
+                // 0
                 y * 4 + x
-            },
-            1 => { // 90
+            }
+            1 => {
+                // 90
                 12 + y - (x * 4)
-            },
-            2 => { // 180
+            }
+            2 => {
+                // 180
                 15 - (y * 4) - x
-            },
-            3 => {
-                3 - y + (x * 4)
-            },
-            _ => 0
+            }
+            3 => 3 - y + (x * 4),
+            _ => 0,
         }
     }
 
@@ -81,37 +82,37 @@ impl Tetromino {
                 result.push_str("XX.X");
                 result.push_str("XX.X");
                 result.push_str("XX.X");
-            },
+            }
             Tetromino::O => {
                 result.push_str("XXXX");
                 result.push_str("X..X");
                 result.push_str("X..X");
                 result.push_str("XXXX");
-            },
+            }
             Tetromino::T => {
                 result.push_str("XXXX");
                 result.push_str("X.XX");
                 result.push_str("...X");
                 result.push_str("XXXX");
-            },
+            }
             Tetromino::J => {
                 result.push_str("XX.X");
                 result.push_str("XX.X");
                 result.push_str("X..X");
                 result.push_str("XXXX");
-            },
+            }
             Tetromino::L => {
                 result.push_str("X.XX");
                 result.push_str("X.XX");
                 result.push_str("X..X");
                 result.push_str("XXXX");
-            },
+            }
             Tetromino::S => {
                 result.push_str("XXXX");
                 result.push_str("X..X");
                 result.push_str("..XX");
                 result.push_str("XXXX");
-            },
+            }
             Tetromino::Z => {
                 result.push_str("XXXX");
                 result.push_str("X..X");
