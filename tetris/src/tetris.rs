@@ -2,6 +2,13 @@ use crate::colors::TetrominoColor;
 use crate::tetromino::Tetromino;
 
 const SCREEN_X_OFFSET: usize = 4;
+const TETROMINO_X_OFFSET: usize = SCREEN_X_OFFSET + 4;
+
+const TETROMINO_SPAWN_SCORE: usize = 10;
+const SINGLE_LINE_SCORE: usize = 40;
+const DOUBLE_LINE_SCORE: usize = 100;
+const TRIPLE_LINE_SCORE: usize = 300;
+const QUADRUPLE_LINE_SCORE: usize = 1200;
 
 /// Struct holding information and methods relating to the current tetris game.
 pub struct TetrisGame {
@@ -13,6 +20,9 @@ pub struct TetrisGame {
     pub tetromino_y: usize,
     pub tetromino_rotation: usize,
     pub frame_counter: usize,
+    pub score: usize,
+    pub lines_frame_counter: Option<usize>,
+    pub lines_to_remove: Option<Vec<usize>>,
     grid: Vec<(bool, Option<TetrominoColor>)>, // true -> contains placed tetromino block, false -> doesnt
 }
 
@@ -23,10 +33,13 @@ impl TetrisGame {
             height,
             tetromino: Some(rand::random::<Tetromino>()),
             tetromino_color: Some(rand::random::<TetrominoColor>()),
-            tetromino_x: 4 + SCREEN_X_OFFSET,
+            tetromino_x: TETROMINO_X_OFFSET,
             tetromino_y: 0,
             tetromino_rotation: 0,
             frame_counter: 0,
+            score: 0,
+            lines_frame_counter: None,
+            lines_to_remove: None,
             grid: vec![(false, None); width * height + 1], // tuple of bool (debris or not) + what color the debris is
         }
     }
@@ -82,9 +95,31 @@ impl TetrisGame {
         // pick new tetromino
         self.tetromino = Some(rand::random::<Tetromino>());
         self.tetromino_color = Some(rand::random::<TetrominoColor>());
-        self.tetromino_x = 4 + SCREEN_X_OFFSET;
+        self.tetromino_x = TETROMINO_X_OFFSET;
         self.tetromino_y = 0;
         self.tetromino_rotation = 0;
+
+        self.score += TETROMINO_SPAWN_SCORE // 10 points for each tetromino spawned
+    }
+
+    /// Checks if there are any lines to remove. If there are, return a vec of which
+    /// lines should be removed. If not, return None.
+    pub fn check_for_lines(&mut self) {
+
+
+    }
+
+    /// Called after lines are removed. Moves the whole grid of debris down by lines_to_move,
+    /// then adds score.
+    pub fn remove_lines(&mut self) {
+
+        match self.lines_to_remove.as_ref().unwrap().len() {
+            1 => self.score += SINGLE_LINE_SCORE,
+            2 => self.score += DOUBLE_LINE_SCORE,
+            3 => self.score += TRIPLE_LINE_SCORE,
+            4 => self.score += QUADRUPLE_LINE_SCORE,
+            _ => ()
+        }
     }
 
     /// Given an (x, y) position of the tetromino, returns the index of that point in the actual

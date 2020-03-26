@@ -1,10 +1,7 @@
-// TODO T: Tetrominos
-// TODO G: Game logic
-
 use std::io::{stdout, Read, Write};
 use std::{thread, time::Duration};
 
-use termion::{async_stdin, clear, color, cursor, raw::IntoRawMode};
+use termion::{async_stdin, clear, color, cursor, screen, raw::IntoRawMode};
 
 mod colors;
 mod tetris;
@@ -12,21 +9,25 @@ mod tetromino;
 
 use tetris::TetrisGame;
 
+const GAME_WIDTH: usize = 10;
+const GAME_HEIGHT: usize = 20;
+const SCORE_TEXT_OFFSET: u16 = 20;
 const SCREEN_X_OFFSET: usize = 4;
+const LINE_WAIT_DURATION: usize = 60;
+const LINE_FLASH_TIME: usize = 30;
 
 fn main() {
     let stdout = stdout();
     let mut stdin = async_stdin().bytes();
-    let mut stdout = stdout.lock().into_raw_mode().unwrap();
+    let mut stdout = screen::AlternateScreen::from(stdout.lock().into_raw_mode().unwrap());
+    write!(stdout, "{}", cursor::Hide).unwrap();
 
     // Create new Tetris game: this handles tetromino creation, ending turn, etc..
-    let mut game = TetrisGame::new(10, 20);
+    let mut game = TetrisGame::new(GAME_WIDTH, GAME_HEIGHT);
 
     // Main game loop
-    // TODO G: Points system
     loop {
         // Handle movement downwards
-        // TODO G: Add speed going up with points & time
         if game.frame_counter % 90 == 0 {
             let curr_y = game.tetromino_y;
             game.move_tetromino_down();
@@ -34,6 +35,8 @@ fn main() {
                 // remove piece
                 game.tetromino_y = curr_y;
                 game.turn_tetromino_to_debris();
+                // since we added debris, check for lines
+                game.check_for_lines();
             }
         }
 
@@ -72,7 +75,35 @@ fn main() {
 
         // ## Rendering ##
 
+        // Clear everything except the well (WIP)
+
         write!(stdout, "{}{}", clear::All, cursor::Goto(1, 1)).unwrap();
+
+        // Render our score
+        write!(stdout, "{}Score: {}", cursor::Goto(SCORE_TEXT_OFFSET, 1), game.score).unwrap();
+
+        // Render line deletion, if need be
+        if let Some(lines_vec) = &game.lines_to_remove {
+            match game.lines_frame_counter {
+                None => game.lines_frame_counter = Some(LINE_WAIT_DURATION),
+                Some(n) => {
+                    match n {
+                        0 => {
+                            // line finished!
+                            game.remove_lines();
+                            game.lines_frame_counter = None;
+                        },
+                        LINE_FLASH_TIME => {
+                            // render lines as = signs
+                            
+                        },
+                        _ => {
+                            game.lines_frame_counter = Some(n - 1);
+                        }
+                    }
+                }
+            }
+        }
 
         // Draw our tetromino
         // Trick here is to get the index of the string through xy_to_idx (which accounts for rotation)
@@ -132,16 +163,8 @@ fn main() {
             }
         }
 
-        write!(stdout, "{}", cursor::Hide).unwrap();
         stdout.flush().unwrap();
         thread::sleep(Duration::from_millis(17)); // ~60fps, did this because of input handling bullshit
         game.frame_counter += 1;
     }
-    // TODO QOL: Make cursor restore properly after end
-    write!(stdout, "{}", cursor::Show).unwrap();
-    stdout.flush().unwrap();
-    println!(
-        "Frame count: {}\nRotation: {}\nXY: {} {}",
-        game.frame_counter, game.tetromino_rotation, game.tetromino_x, game.tetromino_y
-    );
 }
